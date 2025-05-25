@@ -4,6 +4,7 @@ import { inject, injectable } from "tsyringe";
 import HttpStatusCode from "../enums/httpStatusCodes";
 import { CustomError } from "../errors/customError";
 import { errorHandler } from "../utils/handleError";
+import User from "../models/User";
 
 @injectable()
 export class AuthController {
@@ -85,7 +86,7 @@ export class AuthController {
           "Password, email are required",
           HttpStatusCode.BAD_REQUEST
         );
-      await this.UserService.updatePassword(newPassword, email);
+      await this.UserService.resetPassword(newPassword, email);
       res
         .status(HttpStatusCode.OK)
         .json({ message: "Password updated successfully" });
@@ -141,7 +142,38 @@ export class AuthController {
         sameSite: "strict",
         maxAge: 15 * 60 * 1000,
       });
-      res.json({message:'Token refreshed'})
+      res.json({ message: "Token refreshed" });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  logout = async (req: Request, res: Response):Promise<Response | void> => {
+    try {
+      const refreshToken = req.cookies.refresh_token;
+      if (!refreshToken)
+        throw new CustomError(
+          "No content : already logged out",
+          HttpStatusCode.NO_CONTENT
+        );
+
+      await this.UserService.logout(refreshToken);
+
+      res.clearCookie("access_token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      res.clearCookie("refresh_token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      return res
+        .status(HttpStatusCode.OK)
+        .json({ message: "Logged out successfully" });
     } catch (error) {
       errorHandler(error, res);
     }

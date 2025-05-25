@@ -15,6 +15,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/generateToken";
+import { UserDocument } from "../models/User";
 
 const OTP_EXPIRATION_TIME_MS = 2 * 60 * 1000; // ------------------------ 2 minutes
 
@@ -114,9 +115,9 @@ export class UserService implements IUserService {
     }
   }
 
-  async updatePassword(newPassword: string, email: string): Promise<void> {
+  async resetPassword(newPassword: string, email: string): Promise<void> {
     const hashPassword = await bcrypt.hash(newPassword, 10);
-    await this.UserRepository.updatePasswordByEmail(hashPassword, email);
+    await this.UserRepository.resetPasswordByEmail(hashPassword, email);
   }
 
   async refresh(refreshToken: string): Promise<any> {
@@ -126,23 +127,38 @@ export class UserService implements IUserService {
     if (!user || user.refreshToken !== refreshToken)
       throw new CustomError("Invalid refresh token", HttpStatusCode.FORBIDDEN);
     if (!user?._id || !user?.email || !user?.role) {
-      throw new CustomError("User ID, Email, role are missing", HttpStatusCode.FORBIDDEN);
+      throw new CustomError(
+        "User ID, Email, role are missing",
+        HttpStatusCode.FORBIDDEN
+      );
     }
-    const accessToken = generateAccessToken(user._id.toString(),user.email,user.role);
+    const accessToken = generateAccessToken(
+      user._id.toString(),
+      user.email,
+      user.role
+    );
     // await this.UserRepository.updateRefreshToken(
     //   user._id.toString(),
     //   newTokens.refreshToken
     // );
     // let accessToken=
-    return { accessToken,user:{
-      name:user.name,
-      email:user.email,
-      role:user.role
-    }};
+    return {
+      accessToken,
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
-  async logout(userId: string): Promise<void> {
-    await this.UserRepository.clearRefreshToken(userId);
+  async logout(refreshToken: string): Promise<void> {
+    const user = await this.UserRepository.findByRefreshToken(refreshToken);
+    if (!user)
+      throw new CustomError("user not found ", HttpStatusCode.FORBIDDEN);
+
+    user.refreshToken = null;
+    await user.save();
   }
 
   async login(email: string, password: string): Promise<any> {
@@ -157,8 +173,16 @@ export class UserService implements IUserService {
     if (!passMatch)
       throw new CustomError("Invalid credentials", HttpStatusCode.BAD_REQUEST);
 
-    const accessToken = generateAccessToken(user._id.toString(),user.email,user.role);
-    const refreshToken = generateRefreshToken(user._id.toString(),user.email,user.role);
+    const accessToken = generateAccessToken(
+      user._id.toString(),
+      user.email,
+      user.role
+    );
+    const refreshToken = generateRefreshToken(
+      user._id.toString(),
+      user.email,
+      user.role
+    );
     user.refreshToken = refreshToken;
     await user.save();
     return {
@@ -167,13 +191,47 @@ export class UserService implements IUserService {
       user: {
         name: user.name,
         email: user.email,
-        role:user.role
+        role: user.role,
       },
     };
   }
 
-  async getUserDetails(id:string){
-    const user=await this.UserRepository.findById(id)
-    return user
+  async getUserDetails(id: string): Promise<UserDocument | null> {
+    const user = await this.UserRepository.findById(id);
+    return user;
+  }
+
+  async updateProfile(
+    id: string,
+    data: Partial<UserDocument>
+  ): Promise<UserDocument | null> {
+    return this.UserRepository.updateProfile(id, data);
+  }
+
+  async updatePassword(
+    email: string,
+    currentPassword: string,
+    newPassword: string
+  ) {
+    const user = await this.UserRepository.findByEmail(email);
+    if (!user)
+      throw new CustomError("User not found", HttpStatusCode.NOT_FOUND);
+
+    const isMatch = await bcrypt.compare(currentPassword, user?.password!);
+    if (!isMatch)
+      throw new CustomError(
+        "Current password in inorrect",
+        HttpStatusCode.UNAUTHORIZED
+      );
+
+    if (currentPassword === newPassword)
+      throw new CustomError(
+        "New password cannot be same as your old passowrd",
+        HttpStatusCode.BAD_REQUEST
+      );
+
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashPassword;
+    await user.save()
   }
 }

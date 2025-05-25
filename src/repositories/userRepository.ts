@@ -16,7 +16,7 @@ export class UserRepository implements IUserRepository {
     return User.findOne({ email });
   }
 
-  async updatePasswordByEmail(
+  async resetPasswordByEmail(
     hashPassword: string,
     email: string
   ): Promise<void> {
@@ -33,14 +33,23 @@ export class UserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<UserDocument | null> {
-    return await User.findById( id );
+    return await User.findById(id);
   }
 
   async updateRefreshToken(id: string, token: string): Promise<void | null> {
     return User.findByIdAndUpdate(id, { refreshToken: token });
   }
 
-  async clearRefreshToken(id: string): Promise<void | null> {
-    return User.findByIdAndUpdate(id, { refreshToken: "" });
+  async findByRefreshToken(refreshToken: string): Promise<UserDocument | null> {
+    return User.findOne({ refreshToken });
   }
+
+  async updateProfile(id: string, data: Partial<UserDocument>): Promise<UserDocument | null> {
+    return User.findByIdAndUpdate(id,data)
+  }
+
+  // async updatePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
+  //   const user=await User.findById(id)
+    
+  // }
 }

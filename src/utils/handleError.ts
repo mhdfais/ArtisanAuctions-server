@@ -12,7 +12,7 @@ export const errorHandler = (
     });
     return;
   }
-  console.error("unhandled error", err);
+  // console.error("unhandled error", err);
   res.status(500).json({
     success: false,
     message: "internal server error, please try again",

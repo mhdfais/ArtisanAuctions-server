@@ -2,6 +2,7 @@ import { Router } from "express";
 import { container } from "tsyringe";
 import { UserController } from "../../controllers/userController";
 import { requireAuth, requireRole } from "../../middlewares/authMiddleware";
+import upload from "../../utils/multer";
 
 const userController = container.resolve(UserController);
 
@@ -12,6 +13,21 @@ router.get(
   requireAuth,
   requireRole("user"),
   userController.getUserDetails
+);
+
+router.put(
+  "/updateProfile",
+  requireAuth,
+  requireRole("user"),
+  upload.single("profileImage"),
+  userController.updateProfile
+);
+
+router.put(
+  "/updatePassword",
+  requireAuth,
+  requireRole("user"),
+  userController.updatePassword
 );
 
 export default router;

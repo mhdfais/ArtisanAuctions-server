@@ -18,7 +18,7 @@ export interface IUser extends Document {
   listings?: string[];
   walletId: ObjectId | string;
   fcmToken?: string;
-  refreshToken?:string
+  refreshToken?:string | null
   isSeller: boolean;
   sellerId?: ObjectId | string;
 }
