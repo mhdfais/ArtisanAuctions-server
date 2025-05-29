@@ -9,6 +9,8 @@ import { corsOptions } from "./config/corsConfig";
 import { mongoSessionStoreConfig } from "./config/mongoSession";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/user/userRoutes";
+import adminRoutes from "./routes/admin/adminRoutes";
+import notificationRoute from './routes/notification/NotificationRoute'
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
@@ -36,6 +38,8 @@ app.use(
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
+app.use('/api/notification',notificationRoute)
 
 app.use(errorHandler);
 

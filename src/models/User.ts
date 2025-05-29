@@ -39,5 +39,5 @@ const userSchema = new Schema<UserDocument>(
   { timestamps: true }
 );
 
-// ✅ Correctly typed Mongoose model
+
 export default mongoose.model<UserDocument, UserModel>('User', userSchema);

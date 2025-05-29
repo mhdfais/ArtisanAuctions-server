@@ -1,3 +1,4 @@
+import { ISellerRepository } from "../interfaces/repositoryInterfaces/ISellerRepository";
 import HttpStatusCode from "../enums/httpStatusCodes";
 import { CustomError } from "../errors/customError";
 import { IUser } from "./../interfaces/IUser";
@@ -9,13 +10,17 @@ import bcrypt from "bcrypt";
 import { generateUniqueId } from "../utils/generateUniqueId";
 import { IWallet } from "../interfaces/IWallet";
 import { IWalletRepository } from "../interfaces/repositoryInterfaces/IWalletRepository";
-import { Roles } from "../enums/commonEnums";
+import { ApprovalRequestType, Roles } from "../enums/commonEnums";
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/generateToken";
 import { UserDocument } from "../models/User";
+import Seller from "../models/Seller";
+import ApprovalRequest from "../models/ApprovalRequest";
+import { IApprovalRequestRepository } from "../interfaces/repositoryInterfaces/IApprovalRequestRepository";
+import { ISeller } from "../interfaces/ISeller";
 
 const OTP_EXPIRATION_TIME_MS = 2 * 60 * 1000; // ------------------------ 2 minutes
 
@@ -24,7 +29,10 @@ export class UserService implements IUserService {
   constructor(
     @inject("userRepository") private UserRepository: IUserRepository,
     @inject("emailService") private EmailService: IEmailService,
-    @inject("walletRepository") private WalletRepository: IWalletRepository
+    @inject("walletRepository") private WalletRepository: IWalletRepository,
+    @inject("sellerRepository") private SellerRepository: ISellerRepository,
+    @inject("approvalRequestRepository")
+    private ApprovalRequestRepository: IApprovalRequestRepository
   ) {}
 
   async sentOtp(email: string, session: any): Promise<void> {
@@ -212,7 +220,7 @@ export class UserService implements IUserService {
     email: string,
     currentPassword: string,
     newPassword: string
-  ) {
+  ): Promise<void> {
     const user = await this.UserRepository.findByEmail(email);
     if (!user)
       throw new CustomError("User not found", HttpStatusCode.NOT_FOUND);
@@ -232,6 +240,45 @@ export class UserService implements IUserService {
 
     const hashPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashPassword;
-    await user.save()
+    await user.save();
+  }
+
+  async applyForSeller(
+    id: string,
+    idNumber: string,
+    address: string
+  ): Promise<void> {
+    const user = await this.UserRepository.findById(id);
+    if (!user)
+      throw new CustomError("user not found", HttpStatusCode.NOT_FOUND);
+
+    const seller = new Seller({
+      userId: user._id,
+      sellerSince: Date.now(),
+      address: address,
+      identificationNumber: idNumber,
+    });
+    await seller.save();
+
+    const approvalRequest = new ApprovalRequest({
+      requester: user._id,
+      targetRef: seller._id,
+      targetModel: "Seller",
+      type: ApprovalRequestType.SELLER_APPLICATION,
+    });
+    await approvalRequest.save();
+
+    user.sellerId = seller._id;
+    // console.log(seller,'-------------------------------')
+    await user.save();
+  }
+
+  async getSellerStatus(userId: string): Promise<ISeller | null> {
+    const user = await this.UserRepository.findById(userId);
+    const sellerId = user?.sellerId;
+    if (!sellerId)
+      throw new CustomError("sellerId not found", HttpStatusCode.NOT_FOUND);
+    const seller = await this.SellerRepository.findById(sellerId?.toString());
+    return seller;
   }
 }

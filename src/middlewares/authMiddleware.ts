@@ -9,7 +9,12 @@ export const requireAuth = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.cookies.access_token;
+  const isAdminRoute = req.originalUrl.startsWith("/api/admin");
+  // console.log(isAdminRoute,'---------------------------------o')
+  const token = isAdminRoute
+    ? req.cookies.admin_access_token
+    : req.cookies.access_token;
+
   if (!token)
     throw new CustomError(
       "Unauthorized, Token not found",
@@ -27,11 +32,14 @@ export const requireAuth = (
 
 export const requireRole = (...alowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const user=req.user as IAuthPayload
-    if(!alowedRoles.includes(user.role)){
-        throw new CustomError('Forbidden: Insufficient role',HttpStatusCode.FORBIDDEN)
+    const user = req.user as IAuthPayload;
+    if (!alowedRoles.includes(user.role)) {
+      throw new CustomError(
+        "Forbidden: Insufficient role",
+        HttpStatusCode.FORBIDDEN
+      );
     }
 
-    next()
+    next();
   };
 };

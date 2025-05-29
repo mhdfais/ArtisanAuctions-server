@@ -30,4 +30,18 @@ router.put(
   userController.updatePassword
 );
 
+router.post(
+  "/applyForSeller",
+  requireAuth,
+  requireRole("user"),
+  userController.applyForSeller
+);
+
+router.get(
+  '/getSellerStatus',
+  requireAuth,
+  requireRole('user'),
+  userController.getSellerStatus
+)
+
 export default router;

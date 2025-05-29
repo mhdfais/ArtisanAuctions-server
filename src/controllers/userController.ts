@@ -5,6 +5,7 @@ import { CustomError } from "../errors/customError";
 import HttpStatusCode from "../enums/httpStatusCodes";
 import { IAuthPayload } from "../interfaces/IAuthPayload";
 import { UserService } from "../services/userService";
+import { IUserService } from "../interfaces/serviceInterfaces/IUserService";
 
 interface IUpdateData {
   name: string;
@@ -15,7 +16,7 @@ interface IUpdateData {
 
 @injectable()
 export class UserController {
-  constructor(@inject("userService") private UserService: UserService) {}
+  constructor(@inject("userService") private UserService: IUserService) {}
 
   getUserDetails = async (req: Request, res: Response) => {
     try {
@@ -96,7 +97,7 @@ export class UserController {
           HttpStatusCode.BAD_REQUEST
         );
 
-        // console.log(req.body,email)
+      // console.log(req.body,email)
       await this.UserService.updatePassword(
         email,
         currentPassword,
@@ -107,4 +108,44 @@ export class UserController {
       errorHandler(error, res);
     }
   };
+
+  applyForSeller = async (req: Request, res: Response) => {
+    try {
+      if (!req.user)
+        throw new CustomError(
+          "Unauthorized : user not found",
+          HttpStatusCode.UNAUTHORIZED
+        );
+      const user = req.user as IAuthPayload;
+
+      const { idNumber, address } = req.body;
+      if (!idNumber || !address)
+        throw new CustomError(
+          "ID number and address is required",
+          HttpStatusCode.BAD_REQUEST
+        );
+      await this.UserService.applyForSeller(user.id, idNumber, address);
+      res.status(HttpStatusCode.OK).json({ message: "Application submitted" });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getSellerStatus = async (req: Request, res: Response) => {
+    try {
+      if (!req.user)
+        throw new CustomError(
+          "Unauthorized : user not found",
+          HttpStatusCode.UNAUTHORIZED
+        );
+      const user = req.user as IAuthPayload;
+      // console.log(user);
+      const seller = await this.UserService.getSellerStatus(user.id);
+      res.status(HttpStatusCode.OK).json({ status: seller?.approvalStatus });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  
 }

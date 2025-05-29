@@ -1,4 +1,5 @@
 import { UserDocument } from "../../models/User";
+import { ISeller } from "../ISeller";
 import { IUser } from "../IUser";
 
 export interface IUserService {
@@ -7,9 +8,19 @@ export interface IUserService {
   registerData(name: string, email: string, password: string): Promise<IUser>;
   resetPassword(newPassword: string, email: string): Promise<void>;
   findByEmailAndSentOtp(emaiil: string, session: any): Promise<void>;
-  refresh(refreshToken: string):Promise<any>
-  logout(userId:string):Promise<void>
-  login(email:string,password:string):Promise<any>
-  getUserDetails(id: string):Promise<UserDocument |null>
-  updateProfile(id:string,data:Partial<UserDocument>):Promise<UserDocument |null>
+  refresh(refreshToken: string): Promise<any>;
+  logout(userId: string): Promise<void>;
+  login(email: string, password: string): Promise<any>;
+  getUserDetails(id: string): Promise<UserDocument | null>;
+  updateProfile(
+    id: string,
+    data: Partial<UserDocument>
+  ): Promise<UserDocument | null>;
+  applyForSeller(id: string, idNumber: string, address: string): Promise<void>;
+  getSellerStatus(userId: string): Promise<ISeller | null>;
+  updatePassword(
+    email: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void>;
 }

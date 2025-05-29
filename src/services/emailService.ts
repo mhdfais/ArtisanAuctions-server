@@ -44,4 +44,36 @@ export class EmailService implements IEmailService {
       html,
     });
   }
+
+  async sendApprovalNotificationEmail(
+    email: string,
+    name: string,
+    type: "seller" | "artwork",
+    status: "approved" | "rejected"
+  ): Promise<void> {
+    const title =
+      status === "approved" ? "Congratulations!" : "Update on Your Application";
+    const statusText = status === "approved" ? "approved ✅" : "rejected ❌";
+    const message =
+      status === "approved"
+        ? `We're excited to let you know that your ${type} application has been approved!`
+        : `Unfortunately, your ${type} application was not approved at this time.`;
+
+    const html = `
+    <h2>${title}</h2>
+    <p>Hello ${name || "User"},</p>
+    <p>${message}</p>
+    <p>Status: <strong style="color: ${
+      status === "approved" ? "#3BE188" : "#FF6B6B"
+    };">${statusText}</strong></p>
+    <p>Thank you for your interest in Artisan Auctions.</p>
+    <p style="margin-top: 20px;">Best regards,<br />Artisan Auctions Team</p>
+  `;
+
+    await this.sendEmail({
+      to: email,
+      subject: `Your ${type} application has been ${status}`,
+      html,
+    });
+  }
 }

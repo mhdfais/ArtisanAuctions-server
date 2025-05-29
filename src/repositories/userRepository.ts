@@ -48,6 +48,10 @@ export class UserRepository implements IUserRepository {
     return User.findByIdAndUpdate(id,data)
   }
 
+  async updateFcmToken(userId: string, fcmToken: string): Promise<UserDocument | null> {
+    return User.findByIdAndUpdate(userId, { fcmToken }, { new: true });
+  }
+
   // async updatePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
   //   const user=await User.findById(id)
     
