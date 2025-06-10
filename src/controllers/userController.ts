@@ -4,8 +4,8 @@ import { errorHandler } from "../utils/handleError";
 import { CustomError } from "../errors/customError";
 import HttpStatusCode from "../enums/httpStatusCodes";
 import { IAuthPayload } from "../interfaces/IAuthPayload";
-import { UserService } from "../services/userService";
 import { IUserService } from "../interfaces/serviceInterfaces/IUserService";
+import { IStripeService } from "../interfaces/serviceInterfaces/IStripeService";
 
 interface IUpdateData {
   name: string;
@@ -16,7 +16,10 @@ interface IUpdateData {
 
 @injectable()
 export class UserController {
-  constructor(@inject("userService") private UserService: IUserService) {}
+  constructor(
+    @inject("userService") private UserService: IUserService,
+    @inject("stripeService") private StripeService: IStripeService
+  ) {}
 
   getUserDetails = async (req: Request, res: Response) => {
     try {
@@ -37,6 +40,7 @@ export class UserController {
           bio: userDetails?.bio,
           profileImage: userDetails?.profileImage,
           bids: userDetails?.bids,
+          isSeller: userDetails?.isSeller,
         },
       });
     } catch (error) {
@@ -147,5 +151,143 @@ export class UserController {
     }
   };
 
-  
+  addArtwork = async (req: Request, res: Response) => {
+    try {
+      if (!req.user)
+        throw new CustomError(
+          "Unauthorized : user not found",
+          HttpStatusCode.UNAUTHORIZED
+        );
+      const user = req.user as IAuthPayload;
+      // console.log(req.body)
+      const data = req.body;
+      const files = req.files as Express.Multer.File[];
+      await this.UserService.addArtwork(user.id, data, files);
+      res.status(HttpStatusCode.CREATED).json({ message: "artwork created." });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getArtworks = async (req: Request, res: Response) => {
+    try {
+      if (!req.user)
+        throw new CustomError(
+          "Unauthorized : user not found",
+          HttpStatusCode.UNAUTHORIZED
+        );
+      const user = req.user as IAuthPayload;
+      const artworks = await this.UserService.getArtworks(user.id);
+      res.status(HttpStatusCode.OK).json(artworks);
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  scheduleAuction = async (req: Request, res: Response) => {
+    try {
+      // console.log('hi----------------------------------------------')
+      const artworkId = req.params.artworkId;
+      const { startTime, endTime } = req.body;
+
+      if (!startTime || !endTime || !artworkId)
+        throw new CustomError(
+          "startTime,endTime and artworkId is required",
+          HttpStatusCode.BAD_REQUEST
+        );
+
+      await this.UserService.scheduleAuction(artworkId, startTime, endTime);
+      return res
+        .status(HttpStatusCode.OK)
+        .json({ success: true, message: "auction scheduled." });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getAllArtworks = async (req: Request, res: Response) => {
+    try {
+      const artworks = await this.UserService.getAllArtworks();
+      res.status(HttpStatusCode.OK).json({ success: true, artworks });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  createPaymentIntent = async (req: Request, res: Response) => {
+    try {
+      if (!req.user)
+        throw new CustomError(
+          "Unauthorized : user not found",
+          HttpStatusCode.UNAUTHORIZED
+        );
+      const user = req.user as IAuthPayload;
+      const { amount } = req.body;
+      const { clientSecret, transactionId } =
+        await this.StripeService.createPaymentIntent(user.id, amount);
+      res.json({ clientSecret, transactionId });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  confirmDeposit = async (req: Request, res: Response) => {
+    try {
+      const { paymentIntentId } = req.body;
+      if (!paymentIntentId) {
+        throw new CustomError(
+          "Invalid payment intent ID",
+          HttpStatusCode.BAD_REQUEST
+        );
+      }
+      const wallet = await this.StripeService.confirmDeposit(paymentIntentId);
+      res.json(wallet);
+    } catch (err) {
+      errorHandler(err, res);
+    }
+  };
+
+  getWallet = async (req: Request, res: Response) => {
+    try {
+      if (!req.user)
+        throw new CustomError(
+          "Unauthorized : user not found",
+          HttpStatusCode.UNAUTHORIZED
+        );
+      const user = req.user as IAuthPayload;
+      const wallet = await this.StripeService.getWallet(user.id);
+      // console.log(user,wallet,'--------------------------------')
+      const walletData = {
+        balance: wallet.balance,
+      };
+      res.status(HttpStatusCode.OK).json({ success: true, walletData });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getArtworkById = async (req: Request, res: Response) => {
+    try {
+      const artworkId = req.params.artworkId;
+      const artwork = await this.UserService.getArtworkById(artworkId);
+      res.status(HttpStatusCode.OK).json({
+        success: true,
+        details: {
+          title: artwork?.title,
+          yearCreated: artwork?.yearCreated,
+          dimensions: artwork?.dimensions,
+          category: artwork?.category,
+          medium: artwork?.medium,
+          description: artwork?.description,
+          images: artwork?.images,
+          reservePrice: artwork?.reservePrice,
+          highestBid: artwork?.highestBid,
+          auctionEndTime: artwork?.auctionEndTime,
+          auctionStartTime: artwork?.auctionStartTime,
+        },
+      });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
 }

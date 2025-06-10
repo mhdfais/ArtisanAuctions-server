@@ -21,6 +21,10 @@ import Seller from "../models/Seller";
 import ApprovalRequest from "../models/ApprovalRequest";
 import { IApprovalRequestRepository } from "../interfaces/repositoryInterfaces/IApprovalRequestRepository";
 import { ISeller } from "../interfaces/ISeller";
+import { IArtworkRepository } from "../interfaces/repositoryInterfaces/IArtworkRepository";
+import { IArtwork } from "../interfaces/IArtwork";
+import { IApprovalRequest } from "../interfaces/IApprovalRequest";
+import { Types } from "mongoose";
 
 const OTP_EXPIRATION_TIME_MS = 2 * 60 * 1000; // ------------------------ 2 minutes
 
@@ -32,7 +36,8 @@ export class UserService implements IUserService {
     @inject("walletRepository") private WalletRepository: IWalletRepository,
     @inject("sellerRepository") private SellerRepository: ISellerRepository,
     @inject("approvalRequestRepository")
-    private ApprovalRequestRepository: IApprovalRequestRepository
+    private ApprovalRequestRepository: IApprovalRequestRepository,
+    @inject("artworkRepository") private ArtworkRepository: IArtworkRepository
   ) {}
 
   async sentOtp(email: string, session: any): Promise<void> {
@@ -82,11 +87,7 @@ export class UserService implements IUserService {
 
     let wallet: IWallet | null = null;
     try {
-      wallet = await this.WalletRepository.create({
-        // userId: null,
-        availableBalance: 0,
-        reservedBalance: 0,
-      });
+      wallet = await this.WalletRepository.create(0);
       const newUser = await this.UserRepository.createUser({
         name,
         email,
@@ -95,9 +96,10 @@ export class UserService implements IUserService {
         role: Roles.USER,
       });
       // console.log(newUser);/////////////////////////////////////////////////////////
-      await this.WalletRepository.update(wallet._id, {
-        userId: newUser._id,
-      });
+      await this.WalletRepository.findByAndUpdate(
+        wallet._id.toString(),
+        newUser._id.toString()
+      );
 
       return newUser;
     } catch (error) {
@@ -280,5 +282,105 @@ export class UserService implements IUserService {
       throw new CustomError("sellerId not found", HttpStatusCode.NOT_FOUND);
     const seller = await this.SellerRepository.findById(sellerId?.toString());
     return seller;
+  }
+
+  async addArtwork(
+    userId: string,
+    data: any,
+    files: Express.Multer.File[]
+  ): Promise<void> {
+    const user = await this.UserRepository.findById(userId);
+    if (!user)
+      throw new CustomError("User not found", HttpStatusCode.NOT_FOUND);
+
+    if (!user.isSeller || !user.sellerId) {
+      throw new CustomError("User is not a seller", HttpStatusCode.FORBIDDEN);
+    }
+
+    if (!files || files.length === 0) {
+      throw new CustomError(
+        "At least one image is required",
+        HttpStatusCode.BAD_REQUEST
+      );
+    }
+
+    const { height, width, ...rest } = data;
+    const imagePaths = files.map((file) => file.path);
+
+    const artwork: IArtwork = {
+      ...rest,
+      dimensions: {
+        height: Number(height),
+        width: Number(width),
+      },
+      sellerId: user.sellerId,
+      images: imagePaths,
+    };
+    // console.log('--------------hii')
+    const newArtwork = await this.ArtworkRepository.create(artwork);
+    if (!newArtwork)
+      throw new CustomError(
+        "failed to create artwork",
+        HttpStatusCode.NO_CONTENT
+      );
+
+    const approvalRequestdata: IApprovalRequest = {
+      requester: user._id,
+      type: ApprovalRequestType.ARTWORK_SUBMISSION,
+      targetModel: "Artwork",
+      targetRef: newArtwork?._id,
+    };
+    await this.ApprovalRequestRepository.createApprovalRequest(
+      approvalRequestdata
+    );
+  }
+
+  async getArtworks(userId: string): Promise<IArtwork[] | null> {
+    const user = await this.UserRepository.findById(userId);
+    const sellerId = user?.sellerId;
+
+    if (!sellerId || !user.isSeller)
+      throw new CustomError("user is not a seller", HttpStatusCode.FORBIDDEN);
+
+    const artworks = await this.ArtworkRepository.findBySellerId(
+      sellerId.toString()
+    );
+    return artworks;
+  }
+
+  async scheduleAuction(
+    artworkId: string,
+    startTime: string,
+    endTime: string
+  ): Promise<void> {
+    const artwork = await this.ArtworkRepository.findByAndUpdate(
+      artworkId,
+      startTime,
+      endTime
+    );
+    if (!artwork)
+      throw new CustomError(
+        "failed to update schedule time",
+        HttpStatusCode.NOT_FOUND
+      );
+  }
+
+  async getAllArtworks(): Promise<IArtwork[] | null> {
+    const artworks = await this.ArtworkRepository.getAllArtworks();
+    if (!artworks)
+      throw new CustomError(
+        "faileed to get artworks",
+        HttpStatusCode.NOT_FOUND
+      );
+
+    return artworks;
+  }
+
+  async getArtworkById(id:string):Promise<IArtwork|null>{
+    const artwork=await this.ArtworkRepository.findById(id)
+    if(!artwork)
+      throw new CustomError('artwork not found',HttpStatusCode.NOT_FOUND)
+
+    return artwork
   }
 }

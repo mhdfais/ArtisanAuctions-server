@@ -1,4 +1,5 @@
 import { UserDocument } from "../../models/User";
+import { IArtwork } from "../IArtwork";
 import { ISeller } from "../ISeller";
 import { IUser } from "../IUser";
 
@@ -23,4 +24,17 @@ export interface IUserService {
     currentPassword: string,
     newPassword: string
   ): Promise<void>;
+  addArtwork(
+    userId: string,
+    data: any,
+    files: Express.Multer.File[]
+  ): Promise<void>;
+  getArtworks(userId: string): Promise<IArtwork[] | null>;
+  scheduleAuction(
+    artworkId: string,
+    startTime: string,
+    endTime: string
+  ): Promise<void>;
+  getAllArtworks(): Promise<IArtwork[] | null>;
+  getArtworkById(id:string):Promise<IArtwork|null>
 }

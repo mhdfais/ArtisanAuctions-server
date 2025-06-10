@@ -29,7 +29,7 @@ const userSchema = new Schema<UserDocument>(
     },
     isBlocked: { type: Boolean, default: false },
     bids: [{ type: String }],
-    listings: [{ type: String }],
+    listings: [{ type: Schema.Types.ObjectId, ref: "Artwork" }],
     walletId: { type: Schema.Types.ObjectId, ref: "Wallet" },
     fcmToken: { type: String, default: null },
     refreshToken: { type: String },

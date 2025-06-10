@@ -12,10 +12,9 @@ import {
 import { IApprovalRequestRepository } from "../interfaces/repositoryInterfaces/IApprovalRequestRepository";
 import { IApprovalRequest } from "../interfaces/IApprovalRequest";
 import { ISellerRepository } from "../interfaces/repositoryInterfaces/ISellerRepository";
-import {
-  ApprovalRequestStatus,
-} from "../enums/commonEnums";
+import { ApprovalRequestStatus } from "../enums/commonEnums";
 import { IEmailService } from "../interfaces/serviceInterfaces/IEmailService";
+import { IArtworkRepository } from "../interfaces/repositoryInterfaces/IArtworkRepository";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -24,7 +23,8 @@ export class AdminService implements IAdminService {
     @inject("approvalRequestRepository")
     private ApprovalRequestRepository: IApprovalRequestRepository,
     @inject("sellerRepository") private SellerRepository: ISellerRepository,
-    @inject("emailService") private EmailService: IEmailService
+    @inject("emailService") private EmailService: IEmailService,
+    @inject("artworkRepository") private ArtworkRepository: IArtworkRepository
   ) {}
 
   async login(email: string, password: string): Promise<any> {
@@ -98,36 +98,73 @@ export class AdminService implements IAdminService {
     if (!approved)
       throw new CustomError("request not approved", HttpStatusCode.BAD_REQUEST);
 
-    const sellerId = approved.targetRef;
-    if (!sellerId)
-      throw new CustomError("sellerId not found", HttpStatusCode.BAD_REQUEST);
+    if (approved.type === "seller_application") {
+      const sellerId = approved.targetRef;
+      if (!sellerId)
+        throw new CustomError("sellerId not found", HttpStatusCode.BAD_REQUEST);
 
-    const approvedSeller = await this.SellerRepository.updateApprovalStatus(
-      sellerId.toString(),
-      status,
-      true
-    );
-    if (!approvedSeller)
-      throw new CustomError(
-        "seller and sellerId is required",
-        HttpStatusCode.BAD_REQUEST
+      const approvedSeller = await this.SellerRepository.updateApprovalStatus(
+        sellerId.toString(),
+        status,
+        true
       );
+      if (!approvedSeller)
+        throw new CustomError(
+          "seller and sellerId is required",
+          HttpStatusCode.BAD_REQUEST
+        );
 
-    const user = await this.UserRepository.findById(
-      approvedSeller?.userId.toString()
-    );
-    if (!user)
-      throw new CustomError("user not found", HttpStatusCode.BAD_REQUEST);
+      const user = await this.UserRepository.findById(
+        approvedSeller?.userId.toString()
+      );
+      if (!user)
+        throw new CustomError("user not found", HttpStatusCode.BAD_REQUEST);
 
-    user.isSeller=true
-    await user.save()
-    
-    await this.EmailService.sendApprovalNotificationEmail(
-      user?.email,
-      user?.name,
-      "seller",
-      status
-    );
+      user.isSeller = true;
+      await user.save();
+
+      await this.EmailService.sendApprovalNotificationEmail(
+        user?.email,
+        user?.name,
+        "seller",
+        status
+      );
+    } else {
+      const artworkId = approved.targetRef;
+
+      const approvedArtwork = await this.ArtworkRepository.updateApprovalStatus(
+        artworkId.toString(),
+        status
+      );
+      if (!approvedArtwork || !approvedArtwork._id)
+        throw new CustomError(
+          "not approved artwork",
+          HttpStatusCode.BAD_REQUEST
+        );
+
+      const added=await this.UserRepository.addtoListing(
+        approved.requester.toString(),
+        approvedArtwork?._id.toString()
+      );
+      if(!added)
+        throw new CustomError('failed to add to listing',HttpStatusCode.NOT_FOUND)
+
+      const user = await this.UserRepository.findById(
+        approved.requester.toString()
+      );
+      if (!user?.email || !user.name)
+        throw new CustomError(
+          "name and email is requierd",
+          HttpStatusCode.BAD_REQUEST
+        );
+
+      await this.EmailService.sendApprovalNotificationEmail(
+        user?.email,
+        user?.name,
+        "artwork",
+        status
+      );
+    }
   }
 
   async reject(id: string): Promise<void> {
@@ -141,28 +178,53 @@ export class AdminService implements IAdminService {
     if (!rejected)
       throw new CustomError("request not rejected", HttpStatusCode.NOT_FOUND);
 
-    const sellerId = rejected.targetRef;
-    if (!sellerId)
-      throw new CustomError("sellerId not found", HttpStatusCode.BAD_REQUEST);
+    if (rejected.type === "seller_application") {
+      const sellerId = rejected.targetRef;
+      if (!sellerId)
+        throw new CustomError("sellerId not found", HttpStatusCode.BAD_REQUEST);
 
-    const rejectedSeller = await this.SellerRepository.updateApprovalStatus(
-      sellerId.toString(),
-      status
-    );
-    if (!rejectedSeller)
-      throw new CustomError("seller not found", HttpStatusCode.BAD_REQUEST);
+      const rejectedSeller = await this.SellerRepository.updateApprovalStatus(
+        sellerId.toString(),
+        status
+      );
+      if (!rejectedSeller)
+        throw new CustomError("seller not found", HttpStatusCode.BAD_REQUEST);
 
-    const user = await this.UserRepository.findById(
-      rejectedSeller?.userId.toString()
-    );
-    if (!user)
-      throw new CustomError("user not found", HttpStatusCode.BAD_REQUEST);
+      const user = await this.UserRepository.findById(
+        rejectedSeller?.userId.toString()
+      );
+      if (!user)
+        throw new CustomError("user not found", HttpStatusCode.BAD_REQUEST);
 
-    await this.EmailService.sendApprovalNotificationEmail(
-      user.email,
-      user.name,
-      "seller",
-      status
-    );
+      await this.EmailService.sendApprovalNotificationEmail(
+        user.email,
+        user.name,
+        "seller",
+        status
+      );
+    } else {
+      const artworkId = rejected.targetRef;
+
+      await this.ArtworkRepository.updateApprovalStatus(
+        artworkId.toString(),
+        status
+      );
+
+      const user = await this.UserRepository.findById(
+        rejected.requester.toString()
+      );
+      if (!user?.email || !user.name)
+        throw new CustomError(
+          "name and email is requierd",
+          HttpStatusCode.BAD_REQUEST
+        );
+
+      await this.EmailService.sendApprovalNotificationEmail(
+        user?.email,
+        user?.name,
+        "artwork",
+        status
+      );
+    }
   }
 }

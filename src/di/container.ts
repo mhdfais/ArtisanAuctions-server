@@ -8,6 +8,9 @@ import { ApprovalRequestRepository } from "../repositories/ApprovalRequestReposi
 import { AdminService } from "../services/adminService";
 import { SellerRepository } from "../repositories/sellerRepository";
 import { NotificationService } from "../services/NotificationService";
+import { ArtworkRepository } from "../repositories/ArtworkRepository";
+import { StripeService } from "../services/stripeService";
+import { TransactionRepository } from "../repositories/transactionRepository";
 
 // console.log('registeringg')
 
@@ -21,3 +24,8 @@ container.register("approvalRequestRepository", {
 });
 container.register("adminService", { useClass: AdminService });
 container.register("notificationService", { useClass: NotificationService });
+container.register("artworkRepository", { useClass: ArtworkRepository });
+container.register("stripeService", { useClass: StripeService });
+container.register("transactionRepository", {
+  useClass: TransactionRepository,
+});

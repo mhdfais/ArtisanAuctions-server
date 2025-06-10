@@ -1,13 +1,13 @@
 import app from "./app";
 import http from "http";
 import dotenv from "dotenv";
-import { initSocket } from "./config/scoket";
+// import { initSocket } from "./config/scoket";
 import { connectDB } from "./config/dbConnect";
 
 dotenv.config();
 
 const server = http.createServer(app);
-initSocket(server);
+// initSocket(server);
 
 const PORT = process.env.PORT || 4444;
 

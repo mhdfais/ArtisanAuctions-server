@@ -44,16 +44,35 @@ export class UserRepository implements IUserRepository {
     return User.findOne({ refreshToken });
   }
 
-  async updateProfile(id: string, data: Partial<UserDocument>): Promise<UserDocument | null> {
-    return User.findByIdAndUpdate(id,data)
+  async updateProfile(
+    id: string,
+    data: Partial<UserDocument>
+  ): Promise<UserDocument | null> {
+    return User.findByIdAndUpdate(id, data);
   }
 
-  async updateFcmToken(userId: string, fcmToken: string): Promise<UserDocument | null> {
+  async updateFcmToken(
+    userId: string,
+    fcmToken: string
+  ): Promise<UserDocument | null> {
     return User.findByIdAndUpdate(userId, { fcmToken }, { new: true });
+  }
+
+  async addtoListing(
+    userId: string,
+    artworkId: string
+  ): Promise<UserDocument | null> {
+    return User.findByIdAndUpdate(
+      userId,
+      {
+        $addToSet: { listings: artworkId },
+      },
+      { new: true }
+    );
   }
 
   // async updatePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
   //   const user=await User.findById(id)
-    
+
   // }
 }

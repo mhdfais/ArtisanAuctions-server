@@ -1,22 +1,21 @@
-import { Server as httpServer } from "http";
-import { Server } from "socket.io";
 
-let io:Server;
+import { Server, Socket } from "socket.io";
 
-export const initSocket = (server: httpServer) => {
-  io = new Server(server, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST", "PUT", "PATCH"],
-    },
-  });
+export const auctionSocket=(io:Server)=>{
+  const nsp=io.of('/auction')  //  ---------------  name space
 
-  io.on('connection',(socket)=>{
-    console.log('socket connected:', socket.id)
+  nsp.on('connection',(socket:Socket)=>{
+    console.log('client connected to /auction')
+
+    socket.on('joinAuction',(artworkId,userId)=>{
+      socket.join(artworkId)
+      console.log(`user ${userId} joined auction for artwork ${artworkId}`)
+
+      
+    }),
+
+    socket.on('disconnect',()=>{
+      console.log(`client disconnected from ${socket.id}`)
+    })
   })
-};
-
-export const getIO=()=>{
-    if(!io) throw new Error ('socket not initialized')
-        return io
-}
+} 
