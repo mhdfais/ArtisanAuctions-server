@@ -25,6 +25,8 @@ import { IArtworkRepository } from "../interfaces/repositoryInterfaces/IArtworkR
 import { IArtwork } from "../interfaces/IArtwork";
 import { IApprovalRequest } from "../interfaces/IApprovalRequest";
 import { Types } from "mongoose";
+import { IBid } from "../interfaces/IBid";
+import { IBidRepository } from "../interfaces/repositoryInterfaces/IBidRepository";
 
 const OTP_EXPIRATION_TIME_MS = 2 * 60 * 1000; // ------------------------ 2 minutes
 
@@ -37,7 +39,8 @@ export class UserService implements IUserService {
     @inject("sellerRepository") private SellerRepository: ISellerRepository,
     @inject("approvalRequestRepository")
     private ApprovalRequestRepository: IApprovalRequestRepository,
-    @inject("artworkRepository") private ArtworkRepository: IArtworkRepository
+    @inject("artworkRepository") private ArtworkRepository: IArtworkRepository,
+    @inject("bidRepository") private BidRepository: IBidRepository
   ) {}
 
   async sentOtp(email: string, session: any): Promise<void> {
@@ -376,11 +379,19 @@ export class UserService implements IUserService {
     return artworks;
   }
 
-  async getArtworkById(id:string):Promise<IArtwork|null>{
-    const artwork=await this.ArtworkRepository.findById(id)
-    if(!artwork)
-      throw new CustomError('artwork not found',HttpStatusCode.NOT_FOUND)
+  async getArtworkById(id: string): Promise<IArtwork | null> {
+    const artwork = await this.ArtworkRepository.findById(id);
+    if (!artwork)
+      throw new CustomError("artwork not found", HttpStatusCode.NOT_FOUND);
 
-    return artwork
+    return artwork;
+  }
+
+  async getArtworkBidHistory(artworkId: string): Promise<IBid[] | null> {
+    const bids = await this.BidRepository.getBidsByArtwork(artworkId);
+    if (!bids)
+      throw new CustomError("bids not found", HttpStatusCode.NOT_FOUND);
+
+    return bids
   }
 }

@@ -11,6 +11,7 @@ import { NotificationService } from "../services/NotificationService";
 import { ArtworkRepository } from "../repositories/ArtworkRepository";
 import { StripeService } from "../services/stripeService";
 import { TransactionRepository } from "../repositories/transactionRepository";
+import { BidRepository } from "../repositories/BidRepository";
 
 // console.log('registeringg')
 
@@ -29,3 +30,4 @@ container.register("stripeService", { useClass: StripeService });
 container.register("transactionRepository", {
   useClass: TransactionRepository,
 });
+container.register("bidRepository", { useClass: BidRepository });

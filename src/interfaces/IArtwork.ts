@@ -19,7 +19,7 @@ export enum Medium {
 
 export interface IArtwork extends Document {
   _id: string | ObjectId;
-  sellerId?: ObjectId|string;
+  sellerId?: ObjectId | string;
   title: string;
   yearCreated: number;
   dimensions: {
@@ -34,14 +34,15 @@ export interface IArtwork extends Document {
   auctionStartTime?: Date;
   auctionEndTime?: Date;
   reservePrice?: number;
-  approvalStatus?: "pending" | "approved" | "rejected" | "sold" | "ended";
+  approvalStatus?: "pending" | "approved" | "rejected";
   rejectionReason?: string;
 
   highestBid?: number;
   highestBidderId?: ObjectId;
   winnerId?: ObjectId;
-  isActive:Boolean
-
+  isActive: Boolean;
+  isEnded:Boolean
+  
   createdAt?: Date;
   updatedAt?: Date;
 }

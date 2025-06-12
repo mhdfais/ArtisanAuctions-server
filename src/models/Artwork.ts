@@ -67,7 +67,7 @@ const artSchema = new Schema<IArtwork>(
     },
     approvalStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected", "sold", "ended"],
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
     rejectionReason: {
@@ -88,6 +88,10 @@ const artSchema = new Schema<IArtwork>(
       ref: "User",
     },
     isActive: {
+      type: Boolean,
+      default: false,
+    },
+    isEnded: {
       type: Boolean,
       default: false,
     },

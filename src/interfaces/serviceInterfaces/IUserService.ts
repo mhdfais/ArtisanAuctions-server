@@ -36,5 +36,6 @@ export interface IUserService {
     endTime: string
   ): Promise<void>;
   getAllArtworks(): Promise<IArtwork[] | null>;
-  getArtworkById(id:string):Promise<IArtwork|null>
+  getArtworkById(id: string): Promise<IArtwork | null>;
+  getArtworkBidHistory(artworkId: string): Promise<IBid[] | null>;
 }

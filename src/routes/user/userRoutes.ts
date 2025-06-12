@@ -100,10 +100,17 @@ router.get(
 );
 
 router.get(
-  '/getArtworkById/:artworkId',
+  "/getArtworkById/:artworkId",
   requireAuth,
-  requireRole('user'),
+  requireRole("user"),
   wrap(userController.getArtworkById)
-)
+);
+
+router.get(
+  "/getArtworkBids/:artworkId",
+  requireAuth,
+  requireRole("user"),
+  wrap(userController.getArtworkBidHistory)
+);
 
 export default router;

@@ -284,8 +284,21 @@ export class UserController {
           highestBid: artwork?.highestBid,
           auctionEndTime: artwork?.auctionEndTime,
           auctionStartTime: artwork?.auctionStartTime,
+          isActive:artwork?.isActive,
+          isEnded:artwork?.isEnded
         },
       });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getArtworkBidHistory = async (req: Request, res: Response) => {
+    try {
+      const artworkId = req.params.artworkId;
+      const bids = await this.UserService.getArtworkBidHistory(artworkId);
+      // console.log(bids)
+      res.status(HttpStatusCode.OK).json({ success: true, bids });
     } catch (error) {
       errorHandler(error, res);
     }
