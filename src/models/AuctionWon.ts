@@ -8,6 +8,7 @@ const auctionWonSchema=new Schema<IAuctionWon>({
     bidId:{type:mongoose.Types.ObjectId,ref:'Bid',required:true},
     amount:{type:Number,required:true},
     platformCharge:{type:Number,required:true},
+    amountToSeller:{type:Number,required:true},
     paymentStatus:{type:String,required:true},
     receiptUrl:{type:String},
     createdAt:{type:Date,default:Date.now}

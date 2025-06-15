@@ -113,4 +113,18 @@ router.get(
   wrap(userController.getArtworkBidHistory)
 );
 
+router.get(
+  "/getBids",
+  requireAuth,
+  requireRole("user"),
+  wrap(userController.getBids)
+);
+
+router.get(
+  '/getTransactions',
+  requireAuth,
+  requireRole('user'),
+  wrap(userController.getTransactions)
+)
+
 export default router;

@@ -8,6 +8,7 @@ export interface IAuctionWon extends Document{
     bidId:ObjectId,
     amount:Number,
     platformCharge:Number,
+    amountToSeller:Number,
     paymentStatus:String,
     receiptUrl:String,
     createdAt:Date

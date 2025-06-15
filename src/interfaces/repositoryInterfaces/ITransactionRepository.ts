@@ -11,9 +11,11 @@ export interface ITransactionRepository {
   updateTransactionStatus(
     transactionId: string,
     status: ITransaction["status"]
-  ): Promise<ITransaction|null>;
+  ): Promise<ITransaction | null>;
 
   findTransactionByPaymentIntendId(
     stripePaymentIntendId: string
   ): Promise<ITransaction | null>;
+
+  findTransactionsByWalletId(walletId: string): Promise<ITransaction[] | null>;
 }

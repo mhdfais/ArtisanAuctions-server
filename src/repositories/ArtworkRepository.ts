@@ -15,7 +15,7 @@ export class ArtworkRepository implements IArtworkRepository {
     artworkId: string,
     status: string
   ): Promise<IArtwork | null> {
-    return Artwork.findByIdAndUpdate(
+    return await Artwork.findByIdAndUpdate(
       artworkId,
       {
         approvalStatus: status,
@@ -48,7 +48,7 @@ export class ArtworkRepository implements IArtworkRepository {
   }
 
   async getAllArtworks(): Promise<IArtwork[] | null> {
-    return await Artwork.find({ isActive: true, });
+    return await Artwork.find({ isActive: true, }).sort({createdAt:-1});
   }
 
   async findById(id:string):Promise<IArtwork|null>{

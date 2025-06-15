@@ -1,13 +1,11 @@
 import { Server, Socket } from "socket.io";
 import { verifyAccessToken } from "../utils/generateToken";
-import { CustomError } from "../errors/customError";
-import HttpStatusCode from "../enums/httpStatusCodes";
 import Artwork from "../models/Artwork";
 import User from "../models/User";
 import Bid from "../models/Bid";
 import { parseCookies } from "../utils/parseCookie";
 import Wallet from "../models/Wallet";
-import mongoose, { Types } from "mongoose";
+import jwt from "jsonwebtoken";
 
 export const auctionSocket = (io: Server) => {
   const nsp = io.of("/auction"); //  ---------------  name space
@@ -23,7 +21,7 @@ export const auctionSocket = (io: Server) => {
     }
     // console.log(token,'------------------');
     if (!token) {
-      socket.emit("error", { message: "token not found" });
+      socket.emit("error", { message: "Token not found" });
       socket.disconnect();
       return;
     }
@@ -32,8 +30,12 @@ export const auctionSocket = (io: Server) => {
     try {
       user = verifyAccessToken(token);
     } catch (error) {
-      socket.emit("error", { message: "Authentication failed" });
-      socket.disconnect();
+      if (error instanceof jwt.TokenExpiredError) {
+        socket.emit("error", { message: "Token expired", code: "TOKEN_EXPIRED" });
+      } else {
+        socket.emit("error", { message: "Authentication failed" });
+        socket.disconnect();
+      }
       return;
     }
 
@@ -106,6 +108,7 @@ export const auctionSocket = (io: Server) => {
             const wallet = await Wallet.findOne({ userId: userDetail._id });
             if (!wallet) {
               callback({ succcess: false, error: "wallet not found" });
+              return;
             }
 
             const isUserArtwork = userDetail.listings?.some(
@@ -136,15 +139,22 @@ export const auctionSocket = (io: Server) => {
               { $pull: { holds: { artworkId } } }
             );
 
+            // Re-fetch updated wallet
+            const updatedWallet = await Wallet.findOne({
+              userId: userDetail._id,
+            });
+            if (!updatedWallet) {
+              callback({ success: false, error: "wallet not found" });
+              return;
+            }
+
             // ----- check available balance
-            const totalHolds: number = Number(
-              wallet?.holds?.reduce(
-                (sum, hold) => sum + Number(hold.amount ?? 0),
-                0
-              )
+            const totalHolds: number = (updatedWallet.holds ?? []).reduce(
+              (sum, hold) => sum + Number(hold.amount ?? 0),
+              0
             );
             const availableBalance: number =
-              Number(wallet?.balance ?? 0) - totalHolds;
+              Number(updatedWallet.balance ?? 0) - totalHolds;
             if (bidAmount > availableBalance) {
               callback({ success: false, error: "insufficient funds" });
               return;
@@ -155,6 +165,8 @@ export const auctionSocket = (io: Server) => {
               .sort({ amount: -1 })
               .select("bidderId amount");
             let previousBidderId = null;
+            // console.log(previousBid,'---------------------------------')
+            // console.log(userDetail)
             if (
               previousBid &&
               previousBid.bidderId &&
@@ -194,8 +206,8 @@ export const auctionSocket = (io: Server) => {
 
             socket.to(artworkId).emit("newBid", {
               artworkId,
-              bidderId: user._id.toString(),
-              bidderName: user.name,
+              bidderId: userDetail._id.toString(),
+              bidderName: userDetail.name,
               bidAmount,
               timestamp: bid.placedAt.toISOString(),
             });

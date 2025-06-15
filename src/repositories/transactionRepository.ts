@@ -27,12 +27,16 @@ export class TransactionRepository implements ITransactionRepository {
     if (!transaction)
       throw new CustomError("Transaction not found", HttpStatusCode.NOT_FOUND);
     transaction.status = status;
-    return transaction.save();
+    return await transaction.save();
   }
 
   async findTransactionByPaymentIntendId(
     stripePaymentIntendId: string
   ): Promise<ITransaction | null> {
-    return Transaction.findOne({ stripePaymentIntendId });
+    return await Transaction.findOne({ stripePaymentIntendId });
+  }
+
+  async findTransactionsByWalletId(walletId:string):Promise<ITransaction[]|null>{
+    return await Transaction.find({walletId}).sort({createdAt:-1})
   }
 }

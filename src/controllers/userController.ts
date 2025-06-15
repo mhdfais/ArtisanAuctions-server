@@ -284,8 +284,8 @@ export class UserController {
           highestBid: artwork?.highestBid,
           auctionEndTime: artwork?.auctionEndTime,
           auctionStartTime: artwork?.auctionStartTime,
-          isActive:artwork?.isActive,
-          isEnded:artwork?.isEnded
+          isActive: artwork?.isActive,
+          isEnded: artwork?.isEnded,
         },
       });
     } catch (error) {
@@ -299,6 +299,26 @@ export class UserController {
       const bids = await this.UserService.getArtworkBidHistory(artworkId);
       // console.log(bids)
       res.status(HttpStatusCode.OK).json({ success: true, bids });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getBids = async (req: Request, res: Response) => {
+    try {
+      const user = req.user as IAuthPayload;
+      const bidData = await this.UserService.getBids(user.id);
+      res.status(HttpStatusCode.OK).json({ success: true, bidData });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getTransactions = async (req: Request, res: Response) => {
+    try {
+      const user = req.user as IAuthPayload;
+      const transactions = await this.UserService.getTransactions(user.id);
+      res.status(HttpStatusCode.OK).json({ success: true, transactions });
     } catch (error) {
       errorHandler(error, res);
     }

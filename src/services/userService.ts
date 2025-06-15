@@ -27,6 +27,8 @@ import { IApprovalRequest } from "../interfaces/IApprovalRequest";
 import { Types } from "mongoose";
 import { IBid } from "../interfaces/IBid";
 import { IBidRepository } from "../interfaces/repositoryInterfaces/IBidRepository";
+import { ITransactionRepository } from "../interfaces/repositoryInterfaces/ITransactionRepository";
+import { ITransaction } from "../interfaces/ITransaction";
 
 const OTP_EXPIRATION_TIME_MS = 2 * 60 * 1000; // ------------------------ 2 minutes
 
@@ -40,7 +42,9 @@ export class UserService implements IUserService {
     @inject("approvalRequestRepository")
     private ApprovalRequestRepository: IApprovalRequestRepository,
     @inject("artworkRepository") private ArtworkRepository: IArtworkRepository,
-    @inject("bidRepository") private BidRepository: IBidRepository
+    @inject("bidRepository") private BidRepository: IBidRepository,
+    @inject("transactionRepository")
+    private TransactionRepository: ITransactionRepository
   ) {}
 
   async sentOtp(email: string, session: any): Promise<void> {
@@ -392,6 +396,56 @@ export class UserService implements IUserService {
     if (!bids)
       throw new CustomError("bids not found", HttpStatusCode.NOT_FOUND);
 
-    return bids
+    return bids;
+  }
+
+  async getBids(userId: string): Promise<any> {
+    const bids = await this.BidRepository.getBidsByBidderId(userId);
+    if (!bids)
+      throw new CustomError("bids not found", HttpStatusCode.NOT_FOUND);
+
+    const processedBids = bids.map((bid) => {
+      const artwork = bid.artworkId;
+
+      let status: "active" | "outbid" | "won" = "active";
+
+      if (!artwork || !artwork.highestBidderId) {
+        status = "active"; // or handle missing artwork data more gracefully
+      } else if (artwork.isEnded) {
+        status =
+          artwork.highestBidderId.toString() === bid.bidderId.toString()
+            ? "won"
+            : "outbid";
+      } else {
+        status =
+          artwork.highestBidderId.toString() !== bid.bidderId.toString() &&
+          artwork.highestBid !== bid.amount
+            ? "outbid"
+            : "active";
+      }
+
+      return {
+        ...bid,
+        status,
+        currentHighestBid: artwork.highestBid,
+        isAuctionEnded: artwork.isEnded,
+        auctionEndTime: artwork.auctionEndTime,
+      };
+    });
+
+    return processedBids;
+  }
+
+  async getTransactions(userId: string):Promise<ITransaction[]|null> {
+    const wallet = await this.WalletRepository.findByUserId(userId);
+    if (!wallet)
+      throw new CustomError("wallet not found", HttpStatusCode.NOT_FOUND);
+
+    const transactions = 
+      await this.TransactionRepository.findTransactionsByWalletId(
+        wallet?._id.toString()
+      );
+      
+      return transactions
   }
 }
