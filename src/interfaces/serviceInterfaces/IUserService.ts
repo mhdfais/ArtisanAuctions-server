@@ -1,5 +1,6 @@
 import { UserDocument } from "../../models/User";
 import { IArtwork } from "../IArtwork";
+import { IAuctionWon } from "../IAuctionWon";
 import { IBid } from "../IBid";
 import { ISeller } from "../ISeller";
 import { ITransaction } from "../ITransaction";
@@ -40,6 +41,10 @@ export interface IUserService {
   getAllArtworks(): Promise<IArtwork[] | null>;
   getArtworkById(id: string): Promise<IArtwork | null>;
   getArtworkBidHistory(artworkId: string): Promise<IBid[] | null>;
-  getBids(userId: string):Promise<any>
-  getTransactions(userId: string):Promise<ITransaction[]|null>
+  getBids(userId: string): Promise<any>;
+  getTransactions(userId: string): Promise<ITransaction[] | null>;
+  getWonAuctions(winnerId: string): Promise<any>;
+  updateAddress(wonAuctionId:string,addressData:object):Promise<void>
+  getSellerWonAuctions(userId: string):Promise<any>
+  updateStatusAsShipped(id:string):Promise<void>
 }

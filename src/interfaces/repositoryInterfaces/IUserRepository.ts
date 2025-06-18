@@ -1,4 +1,5 @@
 import { UserDocument } from "../../models/User";
+import { IPopulatedSeller } from "../IUser";
 
 export interface IUserRepository {
   findByEmail(email: string): Promise<UserDocument | null>;
@@ -16,5 +17,7 @@ export interface IUserRepository {
     fcmToken: string
   ): Promise<UserDocument | null>;
   addtoListing(userId: string, artworkId: string): Promise<UserDocument | null>;
+  findAllUsers(): Promise<UserDocument[]>
+  findAllSellers():Promise<IPopulatedSeller[]>
   // updatePassword(id:string,currentPassword:string,newPassword:string):Promise<void>
 }

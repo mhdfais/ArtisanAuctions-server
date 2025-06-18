@@ -1,5 +1,6 @@
 import mongoose, { ObjectId } from "mongoose";
 import { Roles } from "../enums/commonEnums";
+import { ISeller } from "./ISeller";
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
@@ -21,4 +22,8 @@ export interface IUser extends Document {
   refreshToken?:string | null
   isSeller: boolean;
   sellerId?: ObjectId | string;
+}
+
+export interface IPopulatedSeller extends Omit<IUser,'sellerId'>{
+  sellerId:ISeller
 }

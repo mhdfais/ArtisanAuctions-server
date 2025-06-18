@@ -29,6 +29,9 @@ import { IBid } from "../interfaces/IBid";
 import { IBidRepository } from "../interfaces/repositoryInterfaces/IBidRepository";
 import { ITransactionRepository } from "../interfaces/repositoryInterfaces/ITransactionRepository";
 import { ITransaction } from "../interfaces/ITransaction";
+import { IAuctionWonRepository } from "../interfaces/repositoryInterfaces/IAuctionWonRepository";
+import { IAuctionWon } from "../interfaces/IAuctionWon";
+import { title } from "process";
 
 const OTP_EXPIRATION_TIME_MS = 2 * 60 * 1000; // ------------------------ 2 minutes
 
@@ -44,7 +47,9 @@ export class UserService implements IUserService {
     @inject("artworkRepository") private ArtworkRepository: IArtworkRepository,
     @inject("bidRepository") private BidRepository: IBidRepository,
     @inject("transactionRepository")
-    private TransactionRepository: ITransactionRepository
+    private TransactionRepository: ITransactionRepository,
+    @inject("auctionWonRepository")
+    private AuctionWonRepository: IAuctionWonRepository
   ) {}
 
   async sentOtp(email: string, session: any): Promise<void> {
@@ -436,16 +441,89 @@ export class UserService implements IUserService {
     return processedBids;
   }
 
-  async getTransactions(userId: string):Promise<ITransaction[]|null> {
+  async getTransactions(userId: string): Promise<ITransaction[] | null> {
     const wallet = await this.WalletRepository.findByUserId(userId);
     if (!wallet)
       throw new CustomError("wallet not found", HttpStatusCode.NOT_FOUND);
 
-    const transactions = 
+    const transactions =
       await this.TransactionRepository.findTransactionsByWalletId(
         wallet?._id.toString()
       );
-      
-      return transactions
+
+    return transactions;
+  }
+
+  async getWonAuctions(winnerId: string): Promise<any> {
+    const wonAuctions =
+      await this.AuctionWonRepository.findAuctionsWonByWinnerId(winnerId);
+    const processedWonAuctions = wonAuctions?.map((wonAuction) => {
+      const artworkId = wonAuction.artworkId;
+
+      return {
+        id: wonAuction._id,
+        amount: wonAuction.amount,
+        receipt: wonAuction.receiptUrl,
+        artworkId: artworkId._id,
+        title: artworkId.title,
+        auctionEndTime: artworkId.auctionEndTime,
+        address: wonAuction.address,
+        image: artworkId.images[0],
+        status: wonAuction.status,
+      };
+    });
+    // console.log(processedWonAuctions)
+    // console.log(wonAuctions)
+    return processedWonAuctions;
+  }
+
+  async updateAddress(
+    wonAuctionId: string,
+    addressData: object
+  ): Promise<void> {
+    await this.AuctionWonRepository.updateAddress(wonAuctionId, addressData);
+  }
+
+  async getSellerWonAuctions(userId: string):Promise<any> {
+    const user = await this.UserRepository.findById(userId);
+    if (!user || !user.sellerId)
+      throw new CustomError(
+        "user not found or user is  not seller",
+        HttpStatusCode.NOT_FOUND
+      );
+    const wonAuctions = await this.AuctionWonRepository.findBySellerId(
+      user?.sellerId?.toString()
+    );
+    const processedWonAuctions = wonAuctions?.map((wonAuction) => {
+      const artworkId = wonAuction.artworkId;
+
+      return {
+        id: wonAuction._id,
+        amount: wonAuction.amount,
+        receipt: wonAuction.receiptUrl,
+        artworkId: artworkId._id,
+        title: artworkId.title,
+        auctionEndTime: artworkId.auctionEndTime,
+        address: wonAuction.address,
+        image: artworkId.images[0],
+        status: wonAuction.status,
+        price:artworkId.reservePrice,
+        yearCreated:artworkId.yearCreated,
+        dimensions:artworkId.dimensions,
+        medium:artworkId.medium,
+        description:artworkId.description,
+        highestBid:artworkId.highestBid,
+        auctionStartTime:artworkId.auctionStartTime,
+        listedAt:artworkId.createdAt,
+        category:artworkId.category
+      };
+    });
+    // console.log(processedWonAuctions)
+    // console.log(wonAuctions)
+    return processedWonAuctions;
+  }
+
+  async updateStatusAsShipped(id:string):Promise<void>{
+    await this.AuctionWonRepository.updateStatusByArtworkId(id,'delivered')
   }
 }

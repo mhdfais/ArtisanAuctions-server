@@ -39,7 +39,7 @@ export class ArtworkRepository implements IArtworkRepository {
       {
         auctionStartTime: new Date(startTime),
         auctionEndTime: new Date(endTime),
-        isActive:true
+        isActive: true,
       },
       {
         new: true,
@@ -48,10 +48,14 @@ export class ArtworkRepository implements IArtworkRepository {
   }
 
   async getAllArtworks(): Promise<IArtwork[] | null> {
-    return await Artwork.find({ isActive: true, }).sort({createdAt:-1});
+    return await Artwork.find({ isActive: true }).sort({ createdAt: -1 });
   }
 
-  async findById(id:string):Promise<IArtwork|null>{
-    return await Artwork.findById(id)
+  async findById(id: string): Promise<IArtwork | null> {
+    return await Artwork.findById(id);
+  }
+
+  async findAllArtworks():Promise<IArtwork[]|null> {
+    return await Artwork.find({ approvalStatus: "approved" });
   }
 }

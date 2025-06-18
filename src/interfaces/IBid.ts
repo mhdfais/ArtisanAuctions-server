@@ -11,5 +11,5 @@ export interface IBid extends Document {
 }
 
 export interface IPopulatedBid extends Omit<IBid, 'artworkId'> {
-  artworkId: IArtwork; // Definitely populated
+  artworkId: IArtwork; 
 }

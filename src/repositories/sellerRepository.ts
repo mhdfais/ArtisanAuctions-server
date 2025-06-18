@@ -25,4 +25,6 @@ export class SellerRepository implements ISellerRepository {
       { new: true }
     );
   }
+
+  
 }

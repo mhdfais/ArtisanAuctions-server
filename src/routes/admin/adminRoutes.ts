@@ -30,4 +30,25 @@ router.put(
   wrap(adminController.reject)
 );
 
+router.get(
+  "/getArtworks",
+  requireAuth,
+  requireRole("admin"),
+  wrap(adminController.findAllArtworks)
+);
+
+router.get(
+  "/getSellers",
+  requireAuth,
+  requireRole("admin"),
+  wrap(adminController.findAllSellers)
+);
+
+router.get(
+  "/getUsers",
+  requireAuth,
+  requireRole("admin"),
+  wrap(adminController.findAllUsers)
+);
+
 export default router;

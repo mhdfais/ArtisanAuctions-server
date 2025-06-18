@@ -15,6 +15,7 @@ import { ISellerRepository } from "../interfaces/repositoryInterfaces/ISellerRep
 import { ApprovalRequestStatus } from "../enums/commonEnums";
 import { IEmailService } from "../interfaces/serviceInterfaces/IEmailService";
 import { IArtworkRepository } from "../interfaces/repositoryInterfaces/IArtworkRepository";
+import { IArtwork } from "../interfaces/IArtwork";
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -142,12 +143,15 @@ export class AdminService implements IAdminService {
           HttpStatusCode.BAD_REQUEST
         );
 
-      const added=await this.UserRepository.addtoListing(
+      const added = await this.UserRepository.addtoListing(
         approved.requester.toString(),
         approvedArtwork?._id.toString()
       );
-      if(!added)
-        throw new CustomError('failed to add to listing',HttpStatusCode.NOT_FOUND)
+      if (!added)
+        throw new CustomError(
+          "failed to add to listing",
+          HttpStatusCode.NOT_FOUND
+        );
 
       const user = await this.UserRepository.findById(
         approved.requester.toString()
@@ -226,5 +230,51 @@ export class AdminService implements IAdminService {
         status
       );
     }
+  }
+
+  async findAllArtworks(): Promise<any> {
+    const artworks = await this.ArtworkRepository.findAllArtworks();
+    const processsedArtworks = artworks?.map((artwork) => {
+      return {
+        title: artwork.title,
+        yearCreated: artwork.yearCreated,
+        dimensions: artwork.dimensions,
+        category: artwork.category,
+        medium: artwork.medium,
+        description: artwork.description,
+        images: artwork.images,
+        reservePrice: artwork.reservePrice,
+        approvalStatus: artwork.approvalStatus,
+        highestBid: artwork.highestBid,
+        isActive: artwork.isActive,
+        isEnded: artwork.isEnded,
+        endTime:artwork.auctionEndTime?.toLocaleString()
+      };
+    });
+    return processsedArtworks;
+  }
+
+  async findAllUsers():Promise<any>{
+    return await this.UserRepository.findAllUsers()
+  }
+
+  async findAllSellers(): Promise<any> {
+    const sellers = await this.UserRepository.findAllSellers();
+    
+    const processedSellers = sellers.map((seller) => {
+      const sellerDetail = seller.sellerId;
+      return {
+        userId: seller.userId,
+        name: seller.name,
+        email: seller.email,
+        artworkCount: seller.listings?.length,
+        idNumber:sellerDetail.identificationNumber,
+        address:sellerDetail.address,
+        approvalStatus:sellerDetail.approvalStatus,
+        phone:seller.phone,
+        bio:seller.bio
+      };
+    });
+    return processedSellers
   }
 }

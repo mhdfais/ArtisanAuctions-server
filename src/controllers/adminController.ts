@@ -93,4 +93,31 @@ export class AdminController {
       errorHandler(error, res);
     }
   };
+
+  findAllArtworks=async(req:Request,res:Response)=>{
+    try {
+      const artworks=await this.AdminService.findAllArtworks()
+      return res.status(HttpStatusCode.OK).json({success:true,artworks})
+    } catch (error) {
+      errorHandler(error,res)
+    }
+  }
+
+  findAllUsers=async(req:Request,res:Response)=>{
+    try {
+      const users=await this.AdminService.findAllUsers()
+      res.status(HttpStatusCode.OK).json({success:true,users})
+    } catch (error) {
+      errorHandler(error,res)
+    }
+  }
+
+  findAllSellers=async(req:Request,res:Response)=>{
+    try {
+      const sellers=await this.AdminService.findAllSellers()
+      res.status(HttpStatusCode.OK).json({success:true,sellers})
+    } catch (error) {
+      errorHandler(error,res)
+    }
+  }
 }

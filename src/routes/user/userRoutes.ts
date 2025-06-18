@@ -121,10 +121,38 @@ router.get(
 );
 
 router.get(
-  '/getTransactions',
+  "/getTransactions",
   requireAuth,
-  requireRole('user'),
+  requireRole("user"),
   wrap(userController.getTransactions)
-)
+);
+
+router.get(
+  "/getWonAuctions",
+  requireAuth,
+  requireRole("user"),
+  wrap(userController.getWonAuctions)
+);
+
+router.put(
+  "/updateAddress/:wonAuctionId",
+  requireAuth,
+  requireRole("user"),
+  wrap(userController.updateAddress)
+);
+
+router.get(
+  "/sellerWonAuctions",
+  requireAuth,
+  requireRole("user"),
+  wrap(userController.getSellerWonAuctions)
+);
+
+router.put(
+  "/updateShippingStatus/:artworkId",
+  requireAuth,
+  requireRole("user"),
+  wrap(userController.updateStatusAsShipped)
+);
 
 export default router;

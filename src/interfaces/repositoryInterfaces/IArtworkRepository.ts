@@ -14,4 +14,5 @@ export interface IArtworkRepository {
   ): Promise<IArtwork | null>;
   getAllArtworks(): Promise<IArtwork[] | null>
   findById(id:string):Promise<IArtwork|null>
+  findAllArtworks():Promise<IArtwork[]|null>
 }

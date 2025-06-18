@@ -323,4 +323,51 @@ export class UserController {
       errorHandler(error, res);
     }
   };
+
+  getWonAuctions = async (req: Request, res: Response) => {
+    try {
+      const user = req.user as IAuthPayload;
+      const wonAuctions = await this.UserService.getWonAuctions(user.id);
+      // console.log(wonAuctions)
+      res.status(HttpStatusCode.OK).json({ success: true, wonAuctions });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  updateAddress = async (req: Request, res: Response) => {
+    try {
+      const wonAuctionId = req.params.wonAuctionId;
+      const { address } = req.body;
+      await this.UserService.updateAddress(wonAuctionId, address);
+      res
+        .status(HttpStatusCode.OK)
+        .json({ success: true, message: "address updated successfully" });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  getSellerWonAuctions = async (req: Request, res: Response) => {
+    try {
+      const user = req.user as IAuthPayload;
+      const sellerWonAuctions = await this.UserService.getSellerWonAuctions(
+        user.id
+      );
+      res.status(HttpStatusCode.OK).json({ success: true, sellerWonAuctions });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
+
+  updateStatusAsShipped = async (req: Request, res: Response) => {
+    try {
+      const artworkId = req.params.artworkId;
+      // console.log(artworkId)
+      await this.UserService.updateStatusAsShipped(artworkId);
+      res.status(HttpStatusCode.OK).json({ success: true });
+    } catch (error) {
+      errorHandler(error, res);
+    }
+  };
 }
