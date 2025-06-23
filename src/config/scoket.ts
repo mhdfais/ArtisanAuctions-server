@@ -41,6 +41,7 @@ export const auctionSocket = (io: Server) => {
 
     socket.on("joinAuction", async ({ artworkId, email }) => {
       if (email !== user.email) {
+        console.log(email,user.email)
         socket.emit("error", { message: "unauthorized user" });
         return;
       }

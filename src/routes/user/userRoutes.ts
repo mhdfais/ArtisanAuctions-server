@@ -73,8 +73,8 @@ router.post(
 
 router.get(
   "/getAllArtworks",
-  requireAuth,
-  requireRole("user"),
+  // requireAuth,
+  // requireRole("user"),
   wrap(userController.getAllArtworks)
 );
 
