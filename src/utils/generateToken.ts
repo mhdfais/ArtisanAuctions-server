@@ -6,7 +6,7 @@ import { ObjectId } from "mongoose";
 dotenv.config();
 const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET;
-console.log(process.env)
+// console.log(process.env)
 
 if (!ACCESS_SECRET || !REFRESH_SECRET) {
   throw new Error("ACCESS_SECRET and REFRESH_SECRET are required");
