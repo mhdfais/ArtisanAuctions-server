@@ -61,6 +61,12 @@ export class UserService implements IUserService {
     session.otp = otp;
     session.email = email;
     session.otpExpiresAt = Date.now() + OTP_EXPIRATION_TIME_MS;
+    await new Promise((resolve, reject) => {
+    session.save((err:any) => {
+      if (err) reject(err);
+      else resolve(null);
+    });
+  });
     console.log(session,'sentotp------------')
     await this.EmailService.sendOtpEmail(email, otp);
   }
