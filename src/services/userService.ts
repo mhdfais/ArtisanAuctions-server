@@ -61,13 +61,13 @@ export class UserService implements IUserService {
     session.otp = otp;
     session.email = email;
     session.otpExpiresAt = Date.now() + OTP_EXPIRATION_TIME_MS;
-
+    console.log(session,'sentotp------------')
     await this.EmailService.sendOtpEmail(email, otp);
   }
 
   async verifyOtp(inputOtp: string, session: any): Promise<boolean> {
     if (!session.otp || !session.otpExpiresAt) {
-      // console.log('dsdsdsds',session)
+      console.log('dsdsdsds',session)
       throw new CustomError(
         "OTP not found in session",
         HttpStatusCode.UNAUTHORIZED
