@@ -18,6 +18,7 @@ export class AuthController {
       }
 
       await this.UserService.sentOtp(email, req.session);
+      console.log(req.session,'requestotp-----------')
       res.status(HttpStatusCode.CREATED).json({ message: "OTP sent to email" });
     } catch (error) {
       errorHandler(error, res);
@@ -30,7 +31,7 @@ export class AuthController {
       if (!otp) {
         throw new CustomError("OTP is required", HttpStatusCode.BAD_REQUEST);
       }
-      // console.log('gdfgfd',req.session)
+      console.log('gdfgfd',req.session)
       await this.UserService.verifyOtp(otp, req.session);
       res
         .status(HttpStatusCode.OK)
